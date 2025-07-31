@@ -1,0 +1,3 @@
+SELECT COUNT(*)
+FROM ...
+WHERE tz_key IS NULL;
