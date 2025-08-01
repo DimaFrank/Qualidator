@@ -2,10 +2,11 @@ import click
 import os
 from .inspectors.uniq import UniqInspector
 from .inspectors.numeric import NumericInspector
-
+from . import __version__
 
 
 @click.group()
+@click.version_option(version=__version__, prog_name='qualidator', message='Qualidator CLI version: %(version)s')
 def cli():
     """Qualidator CLI - manage data quality checks."""
     pass
