@@ -11,6 +11,7 @@ def cli():
     """Qualidator CLI - manage data quality checks."""
     pass
 
+
 @cli.command()
 def init():
     """Initialize the Qualidations directory."""
@@ -58,8 +59,6 @@ def destroy(force):
         click.secho(f"Directory '{dir_path}' does not exist.", fg='yellow')
 
 
-
-
 @cli.command(name='add')
 @click.option('--name', required=True, help='Validation name to add.')
 def add_validation(name):
@@ -88,7 +87,7 @@ def add_validation(name):
             f.write(query)
 
     elif name.lower() == 'column_max_is_between':
-        column = click.prompt("Please enter the column name to check for uniqueness")
+        column = click.prompt("Please enter the column name")
         lower_bound = click.prompt("Please enter the lower bound:")
         upper_bound = click.prompt('Please enter the upper bound:')
         click.echo(f'✔ Will check that "{column}" column MAX values are between {lower_bound} and {upper_bound}')
@@ -98,9 +97,58 @@ def add_validation(name):
 
         with open(f'./.qualidations/{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
             f.write(query)
-            
+
+    elif name.lower() == 'column_min_is_between':
+        column = click.prompt("Please enter the column name")
+        lower_bound = click.prompt("Please enter the lower bound:")
+        upper_bound = click.prompt('Please enter the upper bound:')
+        click.echo(f'✔ Will check that "{column}" column MIN values are between {lower_bound} and {upper_bound}')
+
+        inspector = NumericInspector(column_name=column)
+        query = inspector.column_min_is_between(lower_bound, upper_bound)
+
+        with open(f'./.qualidations/{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+            f.write(query)
+
+    elif name.lower() == 'column_sum_is_between':
+        column = click.prompt("Please enter the column name")
+        lower_bound = click.prompt("Please enter the lower bound:")
+        upper_bound = click.prompt('Please enter the upper bound:')
+        click.echo(f'✔ Will check that "{column}" column SUM values are between {lower_bound} and {upper_bound}')
+
+        inspector = NumericInspector(column_name=column)
+        query = inspector.column_sum_is_between(lower_bound, upper_bound)
+
+        with open(f'./.qualidations/{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+            f.write(query)
+
+    elif name.lower() == 'column_values_are_between':
+        column = click.prompt("Please enter the column name")
+        lower_bound = click.prompt("Please enter the lower bound:")
+        upper_bound = click.prompt('Please enter the upper bound:')
+        click.echo(f'✔ Will check that "{column}" column values are between {lower_bound} and {upper_bound}')
+
+        inspector = NumericInspector(column_name=column)
+        query = inspector.column_values_are_between(lower_bound, upper_bound)
+
+        with open(f'./.qualidations/{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+            f.write(query)
+
+    elif name.lower() == 'column_mean_is_between':
+        column = click.prompt("Please enter the column name")
+        lower_bound = click.prompt("Please enter the lower bound:")
+        upper_bound = click.prompt('Please enter the upper bound:')
+        click.echo(f'✔ Will check that "{column}" column MEAN values are between {lower_bound} and {upper_bound}')
+
+        inspector = NumericInspector(column_name=column)
+        query = inspector.column_mean_is_between(lower_bound, upper_bound)
+
+        with open(f'./.qualidations/{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+            f.write(query)
+
     else:
         click.secho(f"❗ Validation '{name}' is not supported yet.", fg='red')
+
 
 @cli.command(name='remove')
 @click.option('--all', 'remove_all', is_flag=True, help='Remove all validations.')
@@ -132,7 +180,6 @@ def remove_validation(remove_all, name):
         return
 
     click.secho("❗ Please provide either --all or --name option.", fg='yellow')
-
 
 
 @cli.command(name='show')
