@@ -49,7 +49,11 @@ qualidator --help
 ```bash
 qualidator init
 ```
-
+## 📦 Creates .qualidations, then asks for a data provider:
+1. Databricks
+2. Snowflake
+3. Postgres
+4. None
 
 
 
