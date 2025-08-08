@@ -69,6 +69,37 @@ Please enter the column name to check for NOT NULL: customer_id
 ✔ Will check that column "customer_id" is not null.
 ```
 
+### Supported validations:
+| Validation                       | Description                                  |
+|----------------------------------|----------------------------------------------|
+| `is_not_null`                    | Checks that column values are not null       |
+| `column_values_are_unique`       | Checks that all values in a column are unique|
+| `column_max_is_between`          | Checks that the maximum value is within range|
+| `column_min_is_between`          | Checks that the minimum value is within range|
+| `column_sum_is_between`          | Checks that the sum of values is within range|
+| `column_values_are_between`      | Checks that all values are within range      |
+| `column_mean_is_between`         | Checks that the mean value is within range   |
+
+
+### 3️⃣ Check status
+```bash
+qualidator status
+```
+
+```bash
+============================================================
+📋 VALIDATIONS IN YOUR PROJECT
+------------------------------------------------------------
+1. customer_id_is_not_null
+2. email_column_values_are_unique
+------------------------------------------------------------
+✅ Total: 2 validation(s) ready to go!
+💡 You can remove with:
+   qualidator remove --name your_validation_name
+============================================================
+```
+
+
 
 
 
