@@ -64,10 +64,11 @@ qualidator init
 ```bash
 qualidator add --name is_not_null
 ```
-```pgsql
+```bash
 Please enter the column name to check for NOT NULL: customer_id
 ✔ Will check that column "customer_id" is not null.
 ```
+
 
 
 
