@@ -1,7 +1,7 @@
 # 🛡️ Qualidator  
 *A simple, powerful CLI tool for validating your data with SQL-based checks.*
 
-![Qualidator Banner](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)  
+![Qualidator Banner](https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge)  
 ![Python](https://img.shields.io/badge/python-3.8%2B-brightgreen?style=for-the-badge)  
 ![License](https://img.shields.io/badge/license-MIT-lightgrey?style=for-the-badge)
 
@@ -23,3 +23,7 @@ With Qualidator, you can:
 
 ```bash
 pip install qualidator
+
+---
+## ⚡ Usage
+Run qualidator --help to see available commands:
