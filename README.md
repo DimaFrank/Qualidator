@@ -99,8 +99,15 @@ qualidator status
 ============================================================
 ```
 
-
-
+### 4️⃣ Remove validations
+#### Remove all:
+```bash
+qualidator remove --all
+```
+#### Remove one:
+```bash
+qualidator remove --name email_column_values_are_unique
+```
 
 
 
