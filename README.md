@@ -109,5 +109,29 @@ qualidator remove --all
 qualidator remove --name email_column_values_are_unique
 ```
 
+### 5️⃣ Destroy project
+```bash
+qualidator destroy --force
+```
+#### This deletes .qualidations entirely (including config and validations).
 
+---
+
+## 📂 Project Structure
+```css
+qualidator/
+│
+├── inspectors/
+│   ├── uniq.py
+│   ├── numeric.py
+│
+├── __init__.py
+├── main.py
+└── README.md
+```
+
+
+## 🤝 Contributing
+Pull requests and ideas are welcome!
+Open an issue if you have suggestions for new validation types or integrations.
 
