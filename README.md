@@ -135,3 +135,5 @@ qualidator/
 Pull requests and ideas are welcome!
 Open an issue if you have suggestions for new validation types or integrations.
 
+## 📜 License
+This project is licensed under the MIT License.
