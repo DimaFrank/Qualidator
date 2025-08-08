@@ -1,9 +1,14 @@
 import click
 import os
+import json
 from .inspectors.uniq import UniqInspector
 from .inspectors.numeric import NumericInspector
 from . import __version__
 import shutil
+
+
+CONFIG_FILE = "./.qualidations/config.json"
+
 
 @click.group()
 @click.version_option(version=__version__, prog_name='qualidator', message='Qualidator CLI version: %(version)s')
@@ -14,26 +19,69 @@ def cli():
 
 @cli.command()
 def init():
-    """Initialize the Qualidations directory."""
+    """Initialize the Qualidations directory and set up a connector."""
     dir_path = './.qualidations'
     
+    # Step 1: Create directory
     if os.path.exists(dir_path):
         click.secho(f"Directory '{dir_path}' already exists.", fg='yellow')
     else:
         try:
             os.mkdir(dir_path)
-            click.secho("="*60, fg='cyan')
+            click.secho("=" * 60, fg='cyan')
             click.secho("🎉 Welcome to QUALIDATOR! 🎉", fg='green', bold=True)
             click.secho("Your data quality journey begins here...", fg='blue')
             click.secho("-" * 60, fg='cyan')
             click.secho("📁 Directory '.qualidations' created successfully.", fg='green')
+    
+            providers = ["Databricks", "Snowflake", "Postgres", "None"]
+            click.secho("\n🔌 Let's set up a data source connector.", fg='cyan')
+            for idx, provider in enumerate(providers, start=1):
+                click.echo(f"{idx}. {provider}")
+            
+            choice = click.prompt("Select a provider (enter number)", type=int)
+            
+            if choice < 1 or choice > len(providers):
+                click.secho("❌ Invalid choice. Skipping connector setup.", fg='red')
+                return
+            
+            selected_provider = providers[choice - 1]
+            connector_config = {"provider": selected_provider}
+            
+            if selected_provider == "Databricks":
+                connector_config["token"] = click.prompt("Enter your Databricks token", hide_input=True)
+                connector_config["host"] = click.prompt("Enter your Databricks host URL")
+                connector_config["warehouse_id"] = click.prompt("Enter your Databricks warehouse_id")
+            
+            elif selected_provider == "Snowflake":
+                connector_config["account"] = click.prompt("Enter your Snowflake account")
+                connector_config["username"] = click.prompt("Enter your Snowflake username")
+                connector_config["password"] = click.prompt("Enter your Snowflake password", hide_input=True)
+            
+            elif selected_provider == "Postgres":
+                connector_config["host"] = click.prompt("Enter Postgres host")
+                connector_config["port"] = click.prompt("Enter Postgres port", default="5432")
+                connector_config["user"] = click.prompt("Enter Postgres username")
+                connector_config["password"] = click.prompt("Enter Postgres password", hide_input=True)
+                connector_config["database"] = click.prompt("Enter Postgres database name")
+            
+            if selected_provider != "None":
+                try:
+                    with open(CONFIG_FILE, "w") as f:
+                        json.dump(connector_config, f, indent=4)
+                    click.secho(f"✅ Connector for {selected_provider} saved to {CONFIG_FILE}", fg='green')
+                except Exception as e:
+                    click.secho(f"❌ Failed to save connector config: {e}", fg='red')
+            
             click.secho("🛠  You can now start adding validations with:", fg='blue')
             click.secho("    qualidator add --name is_not_null", fg='white')
             click.secho("    qualidator add --name column_values_are_unique", fg='white')
             click.secho("    qualidator add --name column_max_is_between", fg='white')
-            click.secho("="*60, fg='cyan')
+            click.secho("=" * 60, fg='cyan')
+
         except Exception as e:
             click.secho(f"❌ Failed to create directory: {e}", fg='red')
+            return
 
 
 @cli.command()
@@ -182,9 +230,9 @@ def remove_validation(remove_all, name):
     click.secho("❗ Please provide either --all or --name option.", fg='yellow')
 
 
-@cli.command(name='show')
+@cli.command(name='status')
 def show_validations():
-    """Show already added validations."""
+    """Show validations project status."""
     dir_path = './.qualidations'
 
     if not os.path.exists(dir_path):
