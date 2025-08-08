@@ -55,6 +55,19 @@ qualidator init
 3. Postgres
 4. None
 
+### If you pick one of the first three, it prompts for credentials and saves them in:
+```bash
+.qualidations/config.json
+```
+
+### 2️⃣ Add validations
+```bash
+qualidator add --name is_not_null
+```
+```pgsql
+Please enter the column name to check for NOT NULL: customer_id
+✔ Will check that column "customer_id" is not null.
+```
 
 
 
