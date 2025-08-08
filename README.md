@@ -33,3 +33,25 @@ pip install qualidator
 ```bash
 qualidator --help
 ```
+
+| Command  | Description                                                            |
+|----------|------------------------------------------------------------------------|
+| `init`   | Initialize `.qualidations` and optionally set up a data connector      |
+| `destroy`| Delete the `.qualidations` folder (use `--force` for full removal)     |
+| `add`    | Add a validation                                                       |
+| `remove` | Remove a validation or all validations                                 |
+| `status` | Show project status and validations                                    |
+
+---
+
+## 🛠 Examples
+### 1️⃣ Initialize and set up connector
+```bash
+qualidator init
+```
+
+
+
+
+
+
