@@ -1,8 +1,9 @@
 
 class NumericInspector:
 
-    def __init__(self, column_name):
+    def __init__(self, column_name, table_name):
         self.column_name = column_name
+        self.table_name = table_name
 
     def column_max_is_between(self, lower_bound, upper_bound):
         query = (
@@ -12,7 +13,7 @@ class NumericInspector:
             f"           THEN 1 ELSE 0\n"
             f"    END AS result\n"
             f"\n"
-            f"FROM ...;\n"
+            f"FROM {self.table_name};\n"
         )
         return query
     
@@ -25,7 +26,7 @@ class NumericInspector:
             f"           THEN 1 ELSE 0\n"
             f"    END AS result\n"
             f"\n"
-            f"FROM ...;\n"
+            f"FROM {self.table_name};\n"
         )
         return query
     
@@ -38,7 +39,7 @@ class NumericInspector:
             f"           THEN 1 ELSE 0\n"
             f"    END AS result\n"
             f"\n"
-            f"FROM ...;\n"
+            f"FROM {self.table_name};\n"
         )
         return query
     
@@ -51,7 +52,7 @@ class NumericInspector:
             f"           THEN 1 ELSE 0\n"
             f"    END AS result\n"
             f"\n"
-            f"FROM ...;\n"
+            f"FROM {self.table_name};\n"
         )
         return query
     
@@ -64,6 +65,6 @@ class NumericInspector:
             f"           THEN 1 ELSE 0\n"
             f"    END AS result\n"
             f"\n"
-            f"FROM ...;\n"
+            f"FROM {self.table_name};\n"
         )
         return query
