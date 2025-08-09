@@ -9,6 +9,8 @@ qualidator.egg-info/dependency_links.txt
 qualidator.egg-info/entry_points.txt
 qualidator.egg-info/requires.txt
 qualidator.egg-info/top_level.txt
+qualidator/connectors/__init__.py
+qualidator/connectors/databricks.py
 qualidator/inspectors/__init__.py
 qualidator/inspectors/numeric.py
 qualidator/inspectors/uniq.py
