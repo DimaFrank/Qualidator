@@ -10,9 +10,14 @@ class DatabricksConnector:
         self.host = host.rstrip("/")
         self.warehouse_id = warehouse_id
         self.token = token
-        self.base_url = f"{self.host}/api/2.0/sql"
+        self.base_url = f"https://{self.host}/api/2.0/sql"
         self.poll_interval = poll_interval
         self.timeout = timeout
+
+
+    def __repr__(self):
+        return f"DatabricksConnector(host={self.base_url}, warehouse_id={self.warehouse_id})"
+    
 
     def execute_query(self, query):
         headers = {"Authorization": f"Bearer {self.token}"}

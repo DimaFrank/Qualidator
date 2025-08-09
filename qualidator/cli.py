@@ -5,7 +5,7 @@ from .inspectors.uniq import UniqInspector
 from .inspectors.numeric import NumericInspector
 from . import __version__
 import shutil
-
+from .connectors.databricks import DatabricksConnector
 
 CONFIG_FILE = "./.qualidations/config.json"
 
@@ -272,6 +272,13 @@ def run_validation(run_all, name):
     """Run validation(s) from the suite."""
     dir_path = './.qualidations'
 
+    with open(CONFIG_FILE, 'r', encoding='utf-8') as file:
+        config = json.load(file)
+
+    conn = DatabricksConnector(host=config.get('host'),
+                               warehouse_id=config.get('warehouse_id'),
+                               token=config.get('token'))
+
     if not os.path.exists(dir_path):
         click.secho("❗ No validations found. Run `qualidator init` first.", fg='yellow')
         return
@@ -286,11 +293,12 @@ def run_validation(run_all, name):
         for file in sql_files:
             file_path = os.path.join(dir_path, file)
             click.secho(f"Running validation: {file}", fg='blue')
-            # Here you would execute the SQL query in the file
-            # For demonstration, we just print the file name
+
             with open(file_path, 'r', encoding='utf-8') as f:
                 query = f.read()
-                click.secho(f"Query: {query}", fg='green')
+            execution_result = conn.execute_query(query)
+            click.secho(f"Execution result: {execution_result}", fg='green')
+            
         click.secho("✅ All validations executed.", fg='green')
         return
 
@@ -299,10 +307,12 @@ def run_validation(run_all, name):
         if file_name in sql_files:
             file_path = os.path.join(dir_path, file_name)
             click.secho(f"Running validation: {file_name}", fg='blue')
-            # Here you would execute the SQL query in the file
+        
             with open(file_path, 'r', encoding='utf-8') as f:
                 query = f.read()
-                click.secho(f"Query: {query}", fg='green')
+            execution_result = conn.execute_query(query)
+            click.secho(f"Execution result: {execution_result}", fg='green')
+             
             click.secho("✅ Validation executed.", fg='green')
         else:
             click.secho(f"⚠ Validation '{name}' not found.", fg='yellow')
