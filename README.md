@@ -1,7 +1,7 @@
 # 🛡️ Qualidator  
 *A modern CLI for managing SQL-based data quality checks — now with connector setup.*
 
-![Qualidator Banner](https://img.shields.io/badge/version-0.2.0-blue?style=for-the-badge)  
+![Qualidator Banner](https://img.shields.io/badge/version-0.3.0-blue?style=for-the-badge)  
 ![Python](https://img.shields.io/badge/python-3.8%2B-brightgreen?style=for-the-badge)  
 ![License](https://img.shields.io/badge/license-MIT-lightgrey?style=for-the-badge)
 
@@ -41,6 +41,7 @@ qualidator --help
 | `add`    | Add a validation                                                       |
 | `remove` | Remove a validation or all validations                                 |
 | `status` | Show project status and validations                                    |
+| `run`    | Execute validations and show results                                   |
 
 ---
 
@@ -70,15 +71,29 @@ Please enter the column name to check for NOT NULL: customer_id
 ```
 
 ### Supported validations:
-| Validation                       | Description                                  |
-|----------------------------------|----------------------------------------------|
-| `is_not_null`                    | Checks that column values are not null       |
-| `column_values_are_unique`       | Checks that all values in a column are unique|
-| `column_max_is_between`          | Checks that the maximum value is within range|
-| `column_min_is_between`          | Checks that the minimum value is within range|
-| `column_sum_is_between`          | Checks that the sum of values is within range|
-| `column_values_are_between`      | Checks that all values are within range      |
-| `column_mean_is_between`         | Checks that the mean value is within range   |
+| Validation                             | Description                                                                                |
+|----------------------------------------|--------------------------------------------------------------------------------------------|
+| `is_not_null`                          | Checks that column values are NOT NULL                                                     |
+| `has_no_duplicates`                    | Checks that the column has no duplicate values                                             |
+| `column_values_are_unique`             | Checks that all values in the column are unique                                            |
+| `column_unique_value_count_is_between` | Checks that the number of unique values in the column is between given bounds              |
+| `column_value_frequency_is_between`    | Checks that the frequency of each distinct value in the column is within given min and max |
+| `no_empty_strings`                     | Checks that the column contains no empty string values                                     |
+| `primary_key_check`                    | Checks that the column can serve as a primary key (unique and not null)                    |
+| `distinct_ratio_is_above`              | Checks that the ratio of distinct values in the column is at least the given threshold     |
+| `column_max_is_between`                | Checks that the column's MAX value is between given bounds                                 |
+| `column_min_is_between`                | Checks that the column's MIN value is between given bounds                                 |
+| `column_sum_is_between`                | Checks that the column's SUM value is between given bounds                                 |
+| `column_mean_is_between`               | Checks that the column's MEAN value is between given bounds                                |
+| `column_standard_deviation_is_between` | Checks that the column's standard deviation is between given bounds                        |
+| `column_values_are_between`            | Checks that all values in the column are between given bounds                              |
+| `column_has_no_nulls`                  | Checks that the column contains no NULL values                                             |
+| `column_has_values_greater_than`       | Checks that all values in the column are greater than a given threshold                    |
+| `column_median_is_between`             | Checks that the median value of the column is between given bounds                         |
+| `column_non_negative`                  | Checks that all values in the column are non-negative                                      |
+| `table_row_count_is_between`           | Checks that the table's row count is between given bounds                                  |
+| `table_row_count_equals`               | Checks that the table's row count equals a given expected count                            |
+
 
 
 ### 3️⃣ Check status
@@ -109,11 +124,22 @@ qualidator remove --all
 qualidator remove --name email_column_values_are_unique
 ```
 
-### 5️⃣ Destroy project
+### 5️⃣ Run validations
+#### Run all validations:
+```bash
+qualidator run --all
+```
+#### Run a single validation:
+```bash
+qualidator run --name my_catalog_my_schema_my_table_customer_id_is_not_null
+```
+
+### 6️⃣ Destroy the project
 ```bash
 qualidator destroy --force
 ```
 #### This deletes .qualidations entirely (including config and validations).
+
 
 ---
 
@@ -121,15 +147,17 @@ qualidator destroy --force
 ```css
 qualidator/
 │
+├── connectors/
+│   └── databricks.py
 ├── inspectors/
 │   ├── uniq.py
 │   ├── numeric.py
-│
 ├── __init__.py
-├── main.py
+├── cli.py
+├── validations_registry.py
 └── README.md
-```
 
+```
 
 ## 🤝 Contributing
 Pull requests and ideas are welcome!
