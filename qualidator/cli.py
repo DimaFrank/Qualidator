@@ -6,6 +6,8 @@ from .inspectors.numeric import NumericInspector
 from . import __version__
 import shutil
 from .connectors.databricks import DatabricksConnector
+from .validations_registry import VALIDATIONS
+
 
 CONFIG_FILE = "./.qualidations/config.json"
 
@@ -112,92 +114,124 @@ def destroy(force):
 def add_validation(name):
     """Add validations to the suit."""
 
-    table_name = click.prompt('Databricks: Please enter the table name in the format <CATALOG>.<SCHEMA>.<TABLE>', type=str, default='default_catalog.default_schema.default_table')
+    validation = VALIDATIONS.get(name.lower())
 
-    if name.lower() == "is_not_null":
-        column = click.prompt("Please enter the column name to check for NOT NULL")
-        click.echo(f'✔ Will check that column "{column}" is not null.')
-
-        query = (
-            f"SELECT COUNT(*)\n"
-            f"FROM {table_name}\n"
-            f"WHERE {column} IS NULL;\n"
-        )
-        with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-            f.write(query)
-
-    elif name.lower() == 'column_values_are_unique':
-        column = click.prompt("Please enter the column name to check for uniqueness")
-        click.echo(f'✔ Will check that "{column}" column values are unique.')
-        
-        inspector = UniqInspector(column_name=column, table_name=table_name)
-        query = inspector.column_values_are_unique()
-
-        with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-            f.write(query)
-
-    elif name.lower() == 'column_max_is_between':
-        column = click.prompt("Please enter the column name")
-        lower_bound = click.prompt("Please enter the lower bound:")
-        upper_bound = click.prompt('Please enter the upper bound:')
-        click.echo(f'✔ Will check that "{column}" column MAX values are between {lower_bound} and {upper_bound}')
-
-        inspector = NumericInspector(column_name=column, table_name=table_name)
-        query = inspector.column_max_is_between(lower_bound, upper_bound)
-
-        with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-            f.write(query)
-
-    elif name.lower() == 'column_min_is_between':
-        column = click.prompt("Please enter the column name")
-        lower_bound = click.prompt("Please enter the lower bound:")
-        upper_bound = click.prompt('Please enter the upper bound:')
-        click.echo(f'✔ Will check that "{column}" column MIN values are between {lower_bound} and {upper_bound}')
-
-        inspector = NumericInspector(column_name=column, table_name=table_name)
-        query = inspector.column_min_is_between(lower_bound, upper_bound)
-
-        with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-            f.write(query)
-
-    elif name.lower() == 'column_sum_is_between':
-        column = click.prompt("Please enter the column name")
-        lower_bound = click.prompt("Please enter the lower bound:")
-        upper_bound = click.prompt('Please enter the upper bound:')
-        click.echo(f'✔ Will check that "{column}" column SUM values are between {lower_bound} and {upper_bound}')
-
-        inspector = NumericInspector(column_name=column, table_name=table_name)
-        query = inspector.column_sum_is_between(lower_bound, upper_bound)
-
-        with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-            f.write(query)
-
-    elif name.lower() == 'column_values_are_between':
-        column = click.prompt("Please enter the column name")
-        lower_bound = click.prompt("Please enter the lower bound:")
-        upper_bound = click.prompt('Please enter the upper bound:')
-        click.echo(f'✔ Will check that "{column}" column values are between {lower_bound} and {upper_bound}')
-
-        inspector = NumericInspector(column_name=column, table_name=table_name)
-        query = inspector.column_values_are_between(lower_bound, upper_bound)
-
-        with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-            f.write(query)
-
-    elif name.lower() == 'column_mean_is_between':
-        column = click.prompt("Please enter the column name")
-        lower_bound = click.prompt("Please enter the lower bound:")
-        upper_bound = click.prompt('Please enter the upper bound:')
-        click.echo(f'✔ Will check that "{column}" column MEAN values are between {lower_bound} and {upper_bound}')
-
-        inspector = NumericInspector(column_name=column, table_name=table_name)
-        query = inspector.column_mean_is_between(lower_bound, upper_bound)
-
-        with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-            f.write(query)
-
-    else:
+    if not validation:
         click.secho(f"❗ Validation '{name}' is not supported yet.", fg='red')
+        return
+
+    table_name = click.prompt('Databricks: Please enter the table name in the format <CATALOG>.<SCHEMA>.<TABLE>', type=str, default='default_catalog.default_schema.default_table')
+    
+
+    # Prompt for parameters dynamically
+    param_values = []
+    for param_key, promt_text in validation['params']:
+        val = click.prompt(promt_text, type=str)
+        param_values.append(val)
+
+    click.secho(validation['description'](*param_values), fg='green')
+
+    # Build the query 
+    if validation['inspector']:
+        inspector = validation['inspector'](column_name=param_values[0], table_name=table_name)
+        query = getattr(inspector, validation['method'])(*param_values[1:])
+    else:
+        query = validation['builder'](table_name, *param_values)
+
+    # Save the query
+    filename = f"./.qualidations/{table_name.replace('.', '_')}_{'_'.join(v.lower() for v in param_values)}_{name.lower()}.sql"
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(query)
+
+    click.secho(f"✔ Validation saved to {filename}", fg="green")
+
+
+
+
+    # if name.lower() == "is_not_null":
+    #     column = click.prompt("Please enter the column name to check for NOT NULL")
+    #     click.echo(f'✔ Will check that column "{column}" is not null.')
+
+    #     query = (
+    #         f"SELECT COUNT(*)\n"
+    #         f"FROM {table_name}\n"
+    #         f"WHERE {column} IS NULL;\n"
+    #     )
+    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+    #         f.write(query)
+
+    # elif name.lower() == 'column_values_are_unique':
+    #     column = click.prompt("Please enter the column name to check for uniqueness")
+    #     click.echo(f'✔ Will check that "{column}" column values are unique.')
+        
+    #     inspector = UniqInspector(column_name=column, table_name=table_name)
+    #     query = inspector.column_values_are_unique()
+
+    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+    #         f.write(query)
+
+    # elif name.lower() == 'column_max_is_between':
+    #     column = click.prompt("Please enter the column name")
+    #     lower_bound = click.prompt("Please enter the lower bound:")
+    #     upper_bound = click.prompt('Please enter the upper bound:')
+    #     click.echo(f'✔ Will check that "{column}" column MAX values are between {lower_bound} and {upper_bound}')
+
+    #     inspector = NumericInspector(column_name=column, table_name=table_name)
+    #     query = inspector.column_max_is_between(lower_bound, upper_bound)
+
+    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+    #         f.write(query)
+
+    # elif name.lower() == 'column_min_is_between':
+    #     column = click.prompt("Please enter the column name")
+    #     lower_bound = click.prompt("Please enter the lower bound:")
+    #     upper_bound = click.prompt('Please enter the upper bound:')
+    #     click.echo(f'✔ Will check that "{column}" column MIN values are between {lower_bound} and {upper_bound}')
+
+    #     inspector = NumericInspector(column_name=column, table_name=table_name)
+    #     query = inspector.column_min_is_between(lower_bound, upper_bound)
+
+    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+    #         f.write(query)
+
+    # elif name.lower() == 'column_sum_is_between':
+    #     column = click.prompt("Please enter the column name")
+    #     lower_bound = click.prompt("Please enter the lower bound:")
+    #     upper_bound = click.prompt('Please enter the upper bound:')
+    #     click.echo(f'✔ Will check that "{column}" column SUM values are between {lower_bound} and {upper_bound}')
+
+    #     inspector = NumericInspector(column_name=column, table_name=table_name)
+    #     query = inspector.column_sum_is_between(lower_bound, upper_bound)
+
+    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+    #         f.write(query)
+
+    # elif name.lower() == 'column_values_are_between':
+    #     column = click.prompt("Please enter the column name")
+    #     lower_bound = click.prompt("Please enter the lower bound:")
+    #     upper_bound = click.prompt('Please enter the upper bound:')
+    #     click.echo(f'✔ Will check that "{column}" column values are between {lower_bound} and {upper_bound}')
+
+    #     inspector = NumericInspector(column_name=column, table_name=table_name)
+    #     query = inspector.column_values_are_between(lower_bound, upper_bound)
+
+    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+    #         f.write(query)
+
+    # elif name.lower() == 'column_mean_is_between':
+    #     column = click.prompt("Please enter the column name")
+    #     lower_bound = click.prompt("Please enter the lower bound:")
+    #     upper_bound = click.prompt('Please enter the upper bound:')
+    #     click.echo(f'✔ Will check that "{column}" column MEAN values are between {lower_bound} and {upper_bound}')
+
+    #     inspector = NumericInspector(column_name=column, table_name=table_name)
+    #     query = inspector.column_mean_is_between(lower_bound, upper_bound)
+
+    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
+    #         f.write(query)
+
+    # else:
+    #     click.secho(f"❗ Validation '{name}' is not supported yet.", fg='red')
 
 
 @cli.command(name='remove')
