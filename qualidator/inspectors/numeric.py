@@ -5,6 +5,7 @@ class NumericInspector:
         self.column_name = column_name
         self.table_name = table_name
 
+
     def column_max_is_between(self, lower_bound, upper_bound):
         query = (
             f"SELECT\n"
