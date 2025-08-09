@@ -10,6 +10,7 @@ from .validations_registry import VALIDATIONS
 
 
 CONFIG_FILE = "./.qualidations/config.json"
+EXECUTIONS_RESULTS_FILE = "./.qualidations/execution_results.json"
 
 
 @click.group()
@@ -122,7 +123,6 @@ def add_validation(name):
 
     table_name = click.prompt('Databricks: Please enter the table name in the format <CATALOG>.<SCHEMA>.<TABLE>', type=str, default='default_catalog.default_schema.default_table')
     
-
     # Prompt for parameters dynamically
     param_values = []
     for param_key, promt_text in validation['params']:
@@ -144,94 +144,6 @@ def add_validation(name):
         f.write(query)
 
     click.secho(f"✔ Validation saved to {filename}", fg="green")
-
-
-
-
-    # if name.lower() == "is_not_null":
-    #     column = click.prompt("Please enter the column name to check for NOT NULL")
-    #     click.echo(f'✔ Will check that column "{column}" is not null.')
-
-    #     query = (
-    #         f"SELECT COUNT(*)\n"
-    #         f"FROM {table_name}\n"
-    #         f"WHERE {column} IS NULL;\n"
-    #     )
-    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-    #         f.write(query)
-
-    # elif name.lower() == 'column_values_are_unique':
-    #     column = click.prompt("Please enter the column name to check for uniqueness")
-    #     click.echo(f'✔ Will check that "{column}" column values are unique.')
-        
-    #     inspector = UniqInspector(column_name=column, table_name=table_name)
-    #     query = inspector.column_values_are_unique()
-
-    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-    #         f.write(query)
-
-    # elif name.lower() == 'column_max_is_between':
-    #     column = click.prompt("Please enter the column name")
-    #     lower_bound = click.prompt("Please enter the lower bound:")
-    #     upper_bound = click.prompt('Please enter the upper bound:')
-    #     click.echo(f'✔ Will check that "{column}" column MAX values are between {lower_bound} and {upper_bound}')
-
-    #     inspector = NumericInspector(column_name=column, table_name=table_name)
-    #     query = inspector.column_max_is_between(lower_bound, upper_bound)
-
-    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-    #         f.write(query)
-
-    # elif name.lower() == 'column_min_is_between':
-    #     column = click.prompt("Please enter the column name")
-    #     lower_bound = click.prompt("Please enter the lower bound:")
-    #     upper_bound = click.prompt('Please enter the upper bound:')
-    #     click.echo(f'✔ Will check that "{column}" column MIN values are between {lower_bound} and {upper_bound}')
-
-    #     inspector = NumericInspector(column_name=column, table_name=table_name)
-    #     query = inspector.column_min_is_between(lower_bound, upper_bound)
-
-    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-    #         f.write(query)
-
-    # elif name.lower() == 'column_sum_is_between':
-    #     column = click.prompt("Please enter the column name")
-    #     lower_bound = click.prompt("Please enter the lower bound:")
-    #     upper_bound = click.prompt('Please enter the upper bound:')
-    #     click.echo(f'✔ Will check that "{column}" column SUM values are between {lower_bound} and {upper_bound}')
-
-    #     inspector = NumericInspector(column_name=column, table_name=table_name)
-    #     query = inspector.column_sum_is_between(lower_bound, upper_bound)
-
-    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-    #         f.write(query)
-
-    # elif name.lower() == 'column_values_are_between':
-    #     column = click.prompt("Please enter the column name")
-    #     lower_bound = click.prompt("Please enter the lower bound:")
-    #     upper_bound = click.prompt('Please enter the upper bound:')
-    #     click.echo(f'✔ Will check that "{column}" column values are between {lower_bound} and {upper_bound}')
-
-    #     inspector = NumericInspector(column_name=column, table_name=table_name)
-    #     query = inspector.column_values_are_between(lower_bound, upper_bound)
-
-    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-    #         f.write(query)
-
-    # elif name.lower() == 'column_mean_is_between':
-    #     column = click.prompt("Please enter the column name")
-    #     lower_bound = click.prompt("Please enter the lower bound:")
-    #     upper_bound = click.prompt('Please enter the upper bound:')
-    #     click.echo(f'✔ Will check that "{column}" column MEAN values are between {lower_bound} and {upper_bound}')
-
-    #     inspector = NumericInspector(column_name=column, table_name=table_name)
-    #     query = inspector.column_mean_is_between(lower_bound, upper_bound)
-
-    #     with open(f'./.qualidations/{table_name.replace('.','_')}_{column.lower()}_{name.lower()}.sql', "w", encoding="utf-8") as f:
-    #         f.write(query)
-
-    # else:
-    #     click.secho(f"❗ Validation '{name}' is not supported yet.", fg='red')
 
 
 @cli.command(name='remove')
@@ -331,7 +243,19 @@ def run_validation(run_all, name):
             with open(file_path, 'r', encoding='utf-8') as f:
                 query = f.read()
             execution_result = conn.execute_query(query)
-            click.secho(f"Execution result: {execution_result}", fg='green')
+
+            with open(EXECUTIONS_RESULTS_FILE, 'a', encoding='utf-8') as results_file:
+                json.dump({
+                    "file": file,
+                    "query": query,
+                    "result": execution_result
+                }, results_file, indent=4)
+
+            if execution_result[0][-1]=='1':
+                click.secho("✅ Validation passed.", fg='green')
+            else:
+                click.secho("❌ Validation failed.", fg='red')
+            # click.secho(f"Execution result: {execution_result}", fg='green')
             
         click.secho("✅ All validations executed.", fg='green')
         return
@@ -345,8 +269,20 @@ def run_validation(run_all, name):
             with open(file_path, 'r', encoding='utf-8') as f:
                 query = f.read()
             execution_result = conn.execute_query(query)
-            click.secho(f"Execution result: {execution_result}", fg='green')
-             
+            # click.secho(f"Execution result: {execution_result}", fg='green')
+
+            with open(EXECUTIONS_RESULTS_FILE, 'a', encoding='utf-8') as results_file:
+                json.dump({
+                    "file": file,
+                    "query": query,
+                    "result": execution_result
+                }, results_file, indent=4)
+    
+            if execution_result[0][-1]=='1':
+                click.secho("✅ Validation passed.", fg='green')
+            else:
+                click.secho("❌ Validation failed.", fg='red')
+            
             click.secho("✅ Validation executed.", fg='green')
         else:
             click.secho(f"⚠ Validation '{name}' not found.", fg='yellow')
